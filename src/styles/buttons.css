@@ -1,0 +1,35 @@
+button, .custom-file-upload{
+    margin: 10px;
+    background: lightgray;
+    color: black;
+    padding: 18px;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+button:hover, .custom-file-upload:hover {
+    background-color: #deb1fc;
+}
+
+button:active, .custom-file-upload:active {
+    background-color: '#9e0dff';
+}
+
+.primary-button {
+    background: #ae37fd;
+    color: rgba(255, 255, 255, 0.993);
+}
+
+.primary-button:hover {
+    background-color: #bb56ff;
+}
+
+.custom-file-upload {
+    display: inline-block;
+}
+
+input[type="file"] {
+    display: none;
+}

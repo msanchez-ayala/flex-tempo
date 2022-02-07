@@ -1,0 +1,46 @@
+* {
+    font-size: 100%;
+    font-family: Arial;
+}
+
+header {
+    background-color: #a118fc;
+    padding: 10px;
+}
+
+header h1 {
+    color: white;
+    font-size: 24px;
+}
+
+
+#current-song-name, #display-rate-label {
+    font-size: 18px;
+}
+
+#root-div {
+    margin: 0px;
+    position:absolute;
+    top:0px;
+    right:0px;
+    bottom:0px;
+    left:0px;
+}
+
+div {
+    /* border: 1px solid red; */
+    text-align: center;
+    margin: 20px 0px 20px 0px;
+}
+
+
+#playback-dial-container, #music-container, #song-sel-container, 
+#song-display-container, #playback-rate-control {
+    /* border: 1px solid black; */
+    width: 100%;
+    text-align: center;
+}
+
+#display-rate-label {
+    margin: 8px;
+}

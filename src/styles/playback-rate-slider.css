@@ -1,0 +1,35 @@
+
+/* Remove margin and padding to consolidate space around slider and text */
+#playback-rate-slider-div div {
+  /* border: 1px solid red; */
+  padding: 0px;
+  margin: 0px;
+}
+
+div#slider-div {
+  border: 1px solid black;
+}
+
+#rateSlider {
+    -webkit-appearance: none;
+    height: 15px;
+    border-radius: 5px;  
+    background: lightgray;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    margin: 8px;
+    width: 20%;
+
+  }
+
+#rateSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #9e0dff;
+    cursor: pointer;
+}
