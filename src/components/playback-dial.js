@@ -8,20 +8,26 @@ const _canvasDimension = 500
 const Dimensions = {
     canvas: _canvasDimension,
     triangleLength: Math.floor(_canvasDimension / 20),
-    textSize: Math.floor(_canvasDimension / 13)
+    textSizeTotalTime: Math.floor(_canvasDimension / 13),
+    textSizeLoopTime: Math.floor(_canvasDimension / 20)
 }
 
 const Colors = {
   black: '#000000',
   darkPurple: '#9e0dff',
   lightPurple: '#deb1fc',
+  lightGray: '#f4f4f4',
+  lightGrayHover: '#e0e0e0',
+  darkGray: '#504F4F',
 }
 
 
+const _primaryArcWidth = Math.floor(_canvasDimension / 18)
 const LineWidths = {
-    outlineWidth: 1,
-    arcWidth: Math.floor(_canvasDimension / 23)
-  }
+    arcWidth: _primaryArcWidth,
+    loopArcWidth: _primaryArcWidth/3
+}
+
 
 
 // The canvas 0 radians is at 45 degrees clockwise from vertical.
@@ -120,13 +126,6 @@ function makeUpFacingTriangle(originDistance, length, centerPos) {
 }
 
 
-function makeDownFacingTriangle(originDistance, length, centerPos) {
-  let triangle = makeUpFacingTriangle(-1*originDistance, length, centerPos)
-  triangle.rotate(Math.PI, centerPos, centerPos)
-  return triangle
-}
-
-
 // Return a display time always rounded to 2 digits for seconds
 function convertSecondsToDisplayTime(currentTime) {
     let minutes = Math.floor(currentTime / 60)
@@ -142,18 +141,21 @@ const PlaybackDial = props => {
     const canvasRef = React.createRef()
     const centerPos = props.dimension/2
 
-    let outlineRadius = props.dimension/2 - LineWidths.outlineWidth - (2.5 * LineWidths.arcWidth)
-    let playbackArcRadius = outlineRadius - (LineWidths.arcWidth/2)
-    let loopArcRadius = outlineRadius + (LineWidths.arcWidth/2)
-    const playbackHandleRadius = playbackArcRadius - LineWidths.arcWidth
-    const loopHandleRadius = playbackArcRadius + (2 * LineWidths.arcWidth)
+    let outlineRadius = props.dimension/2 - (LineWidths.arcWidth/2)
+    let loopArcRadius = outlineRadius - (LineWidths.loopArcWidth)
+    const handleRadius = outlineRadius - LineWidths.arcWidth
 
+    let outlineColor = Colors.lightGray
+    if (props.mouseInCanvas) {
+      outlineColor = Colors.lightGrayHover
+    }
+    
     const outlineArcParams = new ArcParameters(
-      LineWidths.outlineWidth, Colors.black, outlineRadius)
+      LineWidths.arcWidth, outlineColor, outlineRadius)
     const playbackArcParams = new ArcParameters(
-      LineWidths.arcWidth, Colors.darkPurple, playbackArcRadius)
+      LineWidths.arcWidth, Colors.darkPurple, outlineRadius)
     const loopArcParams = new ArcParameters(
-      LineWidths.arcWidth, Colors.lightPurple, loopArcRadius)
+      LineWidths.loopArcWidth, Colors.lightPurple, loopArcRadius)
     
     // Clear the canvas of all drawings
     const clearCanvas = () => {
@@ -229,22 +231,16 @@ const PlaybackDial = props => {
       ctx.lineTo(triangle.coordB.x, triangle.coordB.y);
       ctx.lineTo(triangle.coordC.x, triangle.coordC.y);
       ctx.closePath();
-      ctx.fillStyle = Colors.black;
+      ctx.fillStyle = Colors.darkGray;
       ctx.fill();
-    }
-  
-    const drawPlaybackHandle = (ctx) => {
-      let triangle = makeUpFacingTriangle(
-        playbackHandleRadius, Dimensions.triangleLength, centerPos)
-      drawHandle(ctx, triangle, props.currentTime)
     }
 
     const drawLoopStartHandle = (ctx) => {
       if (props.loopState === LoopStates.noLoopMarkers) {
         return
       }
-      let triangle = makeDownFacingTriangle(
-        loopHandleRadius, Dimensions.triangleLength, centerPos)
+      let triangle = makeUpFacingTriangle(
+        handleRadius, Dimensions.triangleLength, centerPos)
       drawHandle(ctx, triangle, props.loopStartTime)
     }
 
@@ -252,20 +248,35 @@ const PlaybackDial = props => {
       if (props.loopState !== LoopStates.twoLoopMarkers) {
         return
       }
-      let triangle = makeDownFacingTriangle(
-        loopHandleRadius, Dimensions.triangleLength, centerPos)
+      let triangle = makeUpFacingTriangle(
+        handleRadius, Dimensions.triangleLength, centerPos)
       drawHandle(ctx, triangle, props.loopEndTime)
     }
     
     // Draw the label displaying current time progress
-    const drawTimeLabel = ctx => {
-      ctx.font = Dimensions.textSize.toString() + 'px Arial';
+    const drawTimeLabels = ctx => {
+      ctx.font = Dimensions.textSizeTotalTime.toString() + 'px Arial';
       ctx.textAlign = 'center';
       ctx.fillStyle = 'black';
       let curTime = convertSecondsToDisplayTime(props.currentTime)
       let duration = convertSecondsToDisplayTime(props.duration)
-      let displayTime = `${curTime} / ${duration}`
-      ctx.fillText(displayTime, centerPos, centerPos);
+      let totalDisplayTime = `${curTime} / ${duration}`
+      ctx.fillText(
+        totalDisplayTime, centerPos, centerPos - Dimensions.textSizeTotalTime);
+      
+      if (props.loopState === LoopStates.noLoopMarkers) {
+        return
+      }
+
+      let loopStartTime = convertSecondsToDisplayTime(props.loopStartTime)
+      let loopEndTime = ''
+      if (props.loopState === LoopStates.twoLoopMarkers) {
+        loopEndTime = convertSecondsToDisplayTime(props.loopEndTime)
+      }
+      let loopDisplayTime = `Loop: ${loopStartTime} - ${loopEndTime}`
+      ctx.font = Dimensions.textSizeLoopTime.toString() + 'px Arial'
+      ctx.fillStyle = Colors.darkPurple
+      ctx.fillText(loopDisplayTime, centerPos, centerPos)
     }
     
     // Update
@@ -275,11 +286,10 @@ const PlaybackDial = props => {
       adjustScaling(ctx)
       drawOutlineArc(ctx)
       drawPlaybackArc(ctx)
-      drawPlaybackHandle(ctx)
       drawLoopStartHandle(ctx)
       drawLoopEndHandle(ctx)
       drawLoopArc(ctx)
-      drawTimeLabel(ctx)
+      drawTimeLabels(ctx)
     })
   
     return(
@@ -291,6 +301,8 @@ const PlaybackDial = props => {
           height={props.dimension}
           onMouseMove={props.handleMouseEvent}
           onMouseDown={props.handleMouseEvent}
+          onMouseEnter={props.handleMouseEnter}
+          onMouseLeave={props.handleMouseLeave}
         />
       </div>
     )

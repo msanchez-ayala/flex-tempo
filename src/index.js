@@ -72,6 +72,7 @@ class MainComponent extends React.Component {
       loopState: LoopStates.noLoopMarkers,
       loopStartTime: 0,
       loopEndTime: 0,
+      mouseInCanvas: false,
       showRecentSongPopUp: false,
     }
   }
@@ -190,6 +191,11 @@ class MainComponent extends React.Component {
     this.audio.currentTime = newCurrentTime
   }
 
+  handleCanvasMouseEnterLeave = event => {
+    let mouseInCanvas = (event.type === 'mouseenter')
+    this.setState({mouseInCanvas: mouseInCanvas})
+  }
+
   // Prompt the user to import a song. Loads it into the audio element
   // if successful.
   importSong = event => {
@@ -287,13 +293,17 @@ class MainComponent extends React.Component {
             <p id='current-song-name'>{this.state.songDisplayName}</p>
           </div>
           <PlaybackDial 
+              id='playback-dial'
               dimension={this.state.dimension} 
               currentTime={this.state.currentTime}
               duration={this.state.duration}
               loopState={this.state.loopState}
               loopStartTime={this.state.loopStartTime}
               loopEndTime={this.state.loopEndTime}
+              mouseInCanvas={this.state.mouseInCanvas}
               handleMouseEvent={this.handleCanvasMouseEvent}
+              handleMouseEnter={this.handleCanvasMouseEnterLeave}
+              handleMouseLeave={this.handleCanvasMouseEnterLeave}
           />
           <PlaybackControls
             loopState={this.state.loopState}
