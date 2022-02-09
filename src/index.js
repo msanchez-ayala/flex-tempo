@@ -279,7 +279,7 @@ class MainComponent extends React.Component {
   render() {
     return (
       <div id='root-div'>
-        <header><h1>Tempo</h1></header>
+        <header><h1>Flex Tempo</h1></header>
         <div>
           <SongSelector
             loadedSongNames={this.state.loadedSongNames}
