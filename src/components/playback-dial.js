@@ -97,15 +97,10 @@ class Triangle {
       this.coords = [this.coordA, this.coordB, this.coordC]
     }
 
-    // Return whether the given point is contained inside of this triangle
-    pointIsInside(x, y) {
-        throw 'NOT IMPLEMENTED'
-    } 
-
     // Rotate all coords by the same angle
     rotate(theta, cx, cy) {
         if (theta < 0 | theta > 2*Math.PI) {
-            throw `Theta ${theta} is outside of acceptable range`
+            console.error(`Theta ${theta} is outside of acceptable range`)
         }
         this.coords.forEach((coord) => {
             coord.rotate(theta, cx, cy)
