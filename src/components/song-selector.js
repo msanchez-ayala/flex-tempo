@@ -10,6 +10,7 @@ function SongSelector(props) {
               handleClose={props.hideRecentSongPopUp}
               handleListItemClick={props.handleImportedSongRequest}
               songNames={props.loadedSongNames}
+              clearSongDB={props.clearSongDB}
             />
             <Button onClick={props.selectImportedSong} text={'Imported songs...'}/>
         </div>

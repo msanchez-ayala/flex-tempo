@@ -1,7 +1,7 @@
 import './styles/index.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {importSongToDB, getURLFromSongName, getAllImportedSongNames} from "./services/indexed-db.js";
+import {importSongToDB, getURLFromSongName, getAllImportedSongNames, clearDB} from "./services/indexed-db.js";
 import {Dimensions, LoopStates, PlaybackDial} from './components/playback-dial.js'
 import {SongSelector} from './components/song-selector.js'
 import {PlaybackControls} from './components/playback-controls'
@@ -49,10 +49,10 @@ function getMouseAngleFromVertical(event, centerPos) {
 
 
 class MainComponent extends React.Component {
-
+  #defaultSongDisplayName = 'Select a song...'
 
   // ---- Initialization ---- //
-
+  
 
   constructor(props) {
     super(props)
@@ -63,7 +63,7 @@ class MainComponent extends React.Component {
     this.state = {
       currentURL: '',
       loadedSongNames: [],
-      songDisplayName: 'Select a song...',
+      songDisplayName: this.#defaultSongDisplayName,
       play: false,
       dimension: Dimensions.canvas,
       currentTime: 0,
@@ -121,7 +121,9 @@ class MainComponent extends React.Component {
       this.initializeAudio()
       
     }
+
     if (this.state.currentURL === '') {
+      // CAN'T SET URL TO EMPTY STRING OR AUDIO WILL BREAK APP
       return
     }
     if (this.audio.src !== this.state.currentURL) {
@@ -204,7 +206,7 @@ class MainComponent extends React.Component {
       return
     }
     importSongToDB(file)
-    this.setCurrentSong(file.name)
+      .then(() => this.setCurrentSong(file.name))
   }
 
   handlePlaybackRateChange = event => {
@@ -229,6 +231,24 @@ class MainComponent extends React.Component {
   handleImportedSongRequest = event => {
     let songName = event.target.textContent
     this.setCurrentSong(songName)
+  }
+
+  // FIXME REMOVE THIS FROM PRODUCTION
+  clearSongDB = event => {
+    clearDB()
+      .then(() => {
+        if (this.state.play) {
+          this.togglePlay()
+          this.restartSong()
+        }
+        this.setState(
+          {loadedSongNames: [],
+           currentURL: '',
+           songDisplayName: this.#defaultSongDisplayName
+          }
+        )
+      }
+    )
   }
 
 
@@ -288,6 +308,7 @@ class MainComponent extends React.Component {
             hideRecentSongPopUp={this.hideRecentSongPopUp}
             handleImportedSongRequest={this.handleImportedSongRequest}
             selectImportedSong={this.selectImportedSong}
+            clearSongDB={this.clearSongDB}
           />
           <div id='song-display-container'>
             <p id='current-song-name'>{this.state.songDisplayName}</p>

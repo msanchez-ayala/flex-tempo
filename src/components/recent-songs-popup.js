@@ -18,9 +18,8 @@ const RecentSongsPopUp = (props) => {
       <section className="popup-main">
         <h1>Select a recent song to play</h1>
         <ul>{listItems}</ul>
-        <button type="button" onClick={props.handleClose}>
-          Close
-        </button>
+        {/* <button onClick={props.clearSongDB}>Clear all songs</button> */}
+        <button onClick={props.handleClose}>Close</button>
       </section>
     </div>
   );

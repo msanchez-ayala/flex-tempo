@@ -12,9 +12,9 @@ if (!indexedDB) {
 }
 
 const DBConstants = {
-    name: 'SongDatabase',
+    name: 'SongDB',
     songStore: 'songs',
-    version: 3
+    version: 1
 }
 
 
@@ -42,13 +42,16 @@ function createNewRecord(songFile, arrayBuffer) {
 
 
 function handleDBOpenError(event) {
+    console.error(`Could not open ${DBConstants.name} version ${DBConstants.version}`)
     console.error(event)
 }
 
 function handleDBUpgrade(event) {
     const db = event.target.result
-    // db.deleteObjectStore(DBConstants.songStore)
-    db.createObjectStore(DBConstants.songStore, {keyPath: 'name'})
+    console.log(event.oldVersion)
+    if (event.oldVersion < 1 ) {
+        db.createObjectStore(DBConstants.songStore, {keyPath: 'name'})
+    }
 }
 
 function udpateRecord(objectStore, origRecord, newRecord) {
@@ -78,6 +81,7 @@ function putNewRecord(objectStore, record) {
 }
 
 function getURLFromRecord(record) {
+    console.log('getURLFromRecord', record)
     let blob = arrayBufferToBlob(record.arrayBuffer, record.mimeType)
     const URL = window.URL || window.webkitURL;
     return URL.createObjectURL(blob);
@@ -88,29 +92,33 @@ function getURLFromRecord(record) {
 
 
 function importSongToDB(song) {
-    const request = indexedDB.open(DBConstants.name, DBConstants.version);
-
-    request.onerror = handleDBOpenError
-
-    request.onupgradeneeded = handleDBUpgrade
-
-    request.onsuccess = async function() {
-        const db = request.result
-        let arrayBuffer = await blobToArrayBuffer(song)
-        let record = createNewRecord(song, arrayBuffer)
-        const store = db.transaction([DBConstants.songStore], 'readwrite')
-                        .objectStore(DBConstants.songStore)
-        const query = store.get(song.name)
-        query.onsuccess = function(event) {
-            let songInDB = (query.result !== undefined)
-            if (songInDB) { 
-                udpateRecord(store, event.target.result, record)
-            } else {
-                putNewRecord(store, record)
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DBConstants.name, DBConstants.version);
+        request.onerror = handleDBOpenError
+        request.onupgradeneeded = handleDBUpgrade
+        request.onsuccess = async function() {
+            const db = request.result
+            let arrayBuffer = await blobToArrayBuffer(song)
+            let record = createNewRecord(song, arrayBuffer)
+            const store = db.transaction([DBConstants.songStore], 'readwrite')
+                            .objectStore(DBConstants.songStore)
+            const query = store.get(song.name)
+            query.onsuccess = function(event) {
+                let songInDB = (query.result !== undefined)
+                if (songInDB) { 
+                    udpateRecord(store, event.target.result, record)
+                } else {
+                    putNewRecord(store, record)
+                }
+                resolve()
+            }
+            query.onerror = function(event) {
+                reject(event)
             }
         }
-    }
+    })
 }
+
 
 function getURLFromSongName(songName) {
     return new Promise((resolve, reject) => {
@@ -121,12 +129,14 @@ function getURLFromSongName(songName) {
             const db = request.result
             const store = db.transaction([DBConstants.songStore], 'readwrite')
                             .objectStore(DBConstants.songStore)
-            const query = store.get(songName)
-            query.onsuccess = function(event) {
+            const songNameQuery = store.get(songName)
+            songNameQuery.onsuccess = function(event) {
+                console.log('getURLFromSongName', songNameQuery.result)
+                console.log('getURLFromSongName', event.target.result)
                 let songURL = getURLFromRecord(event.target.result)
                 resolve(songURL)
             }
-            query.onerror = function(error) {
+            songNameQuery.onerror = function(error) {
                 console.error(error)
                 reject(error)
             }
@@ -157,4 +167,29 @@ function getAllImportedSongNames() {
 }
 
 
-export {importSongToDB, getURLFromSongName, getAllImportedSongNames}
+// NOT SAFE FOR USE IN PRODUCTION. Gui has no safe way to set the audio element source to empty.
+function clearDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DBConstants.name, DBConstants.version)
+        request.onerror = handleDBOpenError
+        request.onupgradeneeded = handleDBUpgrade
+        request.onsuccess = function() {
+            const db = request.result
+            const store = db.transaction([DBConstants.songStore], 'readwrite')
+                            .objectStore(DBConstants.songStore)
+            const clearRequest = store.clear()
+            clearRequest.onsuccess = function(event) {
+                console.log(`Store ${DBConstants.songStore} cleared`)
+                resolve()
+            }
+            clearRequest.onerror = function(event) {
+                console.error(event)
+                reject()
+            
+            }
+        }
+    })
+}
+
+
+export {importSongToDB, getURLFromSongName, getAllImportedSongNames, clearDB}
